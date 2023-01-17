@@ -33,7 +33,7 @@ type Person struct {
 
 // }
 
-type SourcesResult struct {
+type Result struct {
 	age      int
 	eyeColor string
 	name     string
@@ -46,15 +46,15 @@ type Sources struct {
 	People   []Person
 }
 
-func (s Sources) find(fkv map[string]interface{}) []SourcesResult {
-	var srs []SourcesResult
+func (s Sources) find(fkv map[string]interface{}) []Result {
+	var srs []Result
 
 	for _, v := range s.Generics {
 		rv := reflect.ValueOf(v)
 		for fk, fv := range fkv {
 			rvfv := rv.FieldByName(fk).Interface()
 			if rvfv == fv {
-				srs = append(srs, SourcesResult{
+				srs = append(srs, Result{
 					age:      v.Age,
 					eyeColor: v.EyeColor,
 					name:     v.Name,
@@ -70,7 +70,7 @@ func (s Sources) find(fkv map[string]interface{}) []SourcesResult {
 		for fk, fv := range fkv {
 			rvfv := rv.FieldByName(fk).Interface()
 			if rvfv == fv {
-				srs = append(srs, SourcesResult{
+				srs = append(srs, Result{
 					age:      v.Age,
 					eyeColor: v.EyeColor,
 					name:     fmt.Sprintf("%s %s", v.FirstName, v.LastName),
@@ -115,7 +115,7 @@ func main() {
 		"Generic": "generic.json",
 		"People":  "people.json",
 	})
-	srs := ns.find(map[string]interface{}{"EyeColor": "brown"})
+	srs := ns.find(map[string]interface{}{"EyeColor": "green"})
 	for _, v := range srs {
 		fmt.Println(v)
 	}
