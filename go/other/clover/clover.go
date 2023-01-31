@@ -9,13 +9,16 @@ import (
 	"strings"
 )
 
-func Clover() string {
+func Clover(in *os.File) string {
 	var lines []string
 	var counter int = 0
 	var size int
 	var err error
 
-	scanner := bufio.NewScanner(os.Stdin)
+	if in == nil {
+		in = os.Stdin
+	}
+	scanner := bufio.NewScanner(in)
 	scanner.Scan()
 	size, err = strconv.Atoi(scanner.Text())
 	if err != nil {

@@ -1,11 +1,11 @@
 package clover
 
 import (
-	"heredoc"
 	"io"
 	"io/ioutil"
-	"os"
 	"testing"
+
+	"github.com/MakeNowJust/heredoc/v2"
 )
 
 func TestClover(t *testing.T) {
@@ -29,13 +29,13 @@ func TestClover(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = in.Seek(0, os.SEEK_SET)
+	_, err = in.Seek(0, io.SeekStart)
 	if err != nil {
 		t.Fatal(err)
 	}
 
-	t := clover(in)
-	if t != "Twinkle you what wonder I how star little twinkle are" {
-		t.Error("unexpected result:", t)
+	r := Clover(in)
+	if r != "Twinkle you what wonder I how star little twinkle are" {
+		t.Error("Unexpected result:", t)
 	}
 }

@@ -1,7 +1,6 @@
-package main
+package roman
 
 import (
-	"fmt"
 	"sort"
 )
 
@@ -31,12 +30,7 @@ var ri = map[string]int{
 // integer: roman mapping
 var ir = transpose(ri)
 
-func main() {
-	fmt.Println(romanToInt("MCMXCIV"))
-	fmt.Println(intToRoman(1994))
-}
-
-func romanToInt(s string) int {
+func RomanToInt(s string) int {
 	var result int
 
 	for i, c := range s {
@@ -68,7 +62,7 @@ func romanToInt(s string) int {
 	return result
 }
 
-func intToRoman(n int) string {
+func IntToRoman(n int) string {
 	var result string
 	var irn []int
 
