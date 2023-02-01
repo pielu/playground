@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"main/palindrom"
 	"main/roman"
 	"strconv"
 )
@@ -29,5 +30,12 @@ func main() {
 			log.Fatal(err)
 		}
 		fmt.Println(roman.IntToRoman(si))
+	}
+	if program == "palindrom" {
+		si, err := strconv.Atoi(input)
+		if err != nil {
+			log.Fatal(err)
+		}
+		fmt.Println(palindrom.IsPalindrome(si))
 	}
 }
