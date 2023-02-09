@@ -36,4 +36,10 @@
     "go.testEnvFile": "${workspaceFolder}/.env",
     ```
 
-## How to run as a program accepting the X parameter
+## How to run as a program accepting parameters
+
+From within `other` directory
+
+```text
+go run main.go --bucketName sure --numberRecent 1
+```

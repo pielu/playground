@@ -1,6 +1,9 @@
 package sure
 
-import "strings"
+import (
+	"log"
+	"strings"
+)
 
 func Contains(s []string, e string) bool {
 	for _, a := range s {
@@ -29,4 +32,10 @@ func FindX(x int, objects []*BucketObject) []*BucketObject {
 		}
 	}
 	return removeObjects
+}
+
+func Printer(prefix string, objects []*BucketObject) {
+	for _, o := range objects {
+		log.Println(prefix, o.Key, o.ModifiedAt)
+	}
 }

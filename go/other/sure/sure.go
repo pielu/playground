@@ -2,20 +2,13 @@ package sure
 
 import (
 	"context"
-	"flag"
 	"log"
 	"os"
 
 	"github.com/aws/aws-sdk-go-v2/service/s3"
 )
 
-func main() {
-	var bucketName string
-	var numberRecent int
-
-	flag.StringVar(&bucketName, "b", "", "Specify S3 bucket name.")
-	flag.IntVar(&numberRecent, "n", 0, "Specify number of most recent folders to spare.")
-
+func Challenge(bucketName string, numberRecent int) {
 	awsCfg := NewCfg(os.Getenv("AWS_REGION"), os.Getenv("AWS_ENDPOINT"))
 
 	s3client := s3.NewFromConfig(awsCfg, func(o *s3.Options) {
@@ -32,9 +25,23 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	Printer("ORIGINAL", s3o)
 
 	s3rm := FindX(numberRecent, s3o)
+	Printer("TO REMOVE", s3rm)
+
+	if len(s3rm) <= numberRecent {
+		log.Printf("Nothing to do! Asked to leave %d most recent folders in the bucket `%s`", numberRecent, bucketName)
+		os.Exit(0)
+	}
+
 	if err := s3svc.DeleteObjects(context.TODO(), bucketName, s3rm); err != nil {
 		log.Fatal(err)
 	}
+
+	s3or, err := s3svc.ListObjects(context.TODO(), bucketName)
+	if err != nil {
+		log.Fatal(err)
+	}
+	Printer("REMAINED", s3or)
 }

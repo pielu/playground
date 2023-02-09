@@ -43,9 +43,7 @@ func TestSure(t *testing.T) {
 		t.Error(err)
 	}
 
-	for _, o := range s3o {
-		t.Log("ORIGINAL", o.Key, o.ModifiedAt)
-	}
+	Printer("ORIGINAL", s3o)
 
 	// List to remove should not contain y, x and _z folders
 	s3rm := FindX(3, s3o)
@@ -66,10 +64,7 @@ func TestSure(t *testing.T) {
 	if err != nil {
 		t.Error(err)
 	}
-	for _, o := range s3or {
-		t.Log("REMAINED", o.Key, o.ModifiedAt)
-	}
-
+	Printer("REMAINED", s3or)
 }
 
 // Walk the directory and upload dummy files for testing
