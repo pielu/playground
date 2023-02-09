@@ -30,7 +30,7 @@
 
 2. From within vscode
 
-    Just open `sure` folder and `main_test.go` file, assuming `golang` plugin configured, click `run test` over `TestSure`. To make vscode include vars, use the following configuration
+    Just open `sure` folder and `sure_test.go` file, assuming `golang` plugin configured, click `run test` over `TestSure`. To make vscode include vars, use the following configuration
 
     ```text
     "go.testEnvFile": "${workspaceFolder}/.env",
