@@ -3,28 +3,22 @@ package sure
 import (
 	"context"
 	"fmt"
-	"io"
-	"log"
-	"os"
+	"sort"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
 	"github.com/aws/aws-sdk-go-v2/feature/s3/manager"
 	"github.com/aws/aws-sdk-go-v2/service/s3"
+	"github.com/aws/aws-sdk-go-v2/service/s3/types"
 )
+
+// Define basics; for a more robust abstraction probably should use interface struct
+// for the s3 bucket client fitting s3 receiver functions
 
 type BucketObject struct {
 	Key        string
-	Size       int64
 	ModifiedAt time.Time
-}
-
-type BucketClient interface {
-	Create(ctx context.Context, bucket string) error
-	UploadObject(ctx context.Context, bucket, fileName string, body io.Reader) (string, error)
-	DeleteObject(ctx context.Context, bucket, fileName string) error
-	ListObjects(ctx context.Context, bucket string) ([]*BucketObject, error)
 }
 
 type S3 struct {
@@ -49,6 +43,17 @@ func (s S3) Create(ctx context.Context, bucketName string) error {
 	return nil
 }
 
+func (s S3) Exists(ctx context.Context, bucketName string) (bool, error) {
+	_, err := s.client.HeadBucket(context.TODO(), &s3.HeadBucketInput{
+		Bucket: aws.String(bucketName),
+	})
+	exists := true
+	if err != nil {
+		return false, fmt.Errorf("exists not: %w", err)
+	}
+	return exists, nil
+}
+
 func (s S3) List(ctx context.Context) (*s3.ListBucketsOutput, error) {
 	res, err := s.client.ListBuckets(ctx, &s3.ListBucketsInput{})
 	if err != nil {
@@ -59,17 +64,55 @@ func (s S3) List(ctx context.Context) (*s3.ListBucketsOutput, error) {
 
 }
 
-func NewAwsCfg() aws.Config {
-	awsRegion := os.Getenv("AWS_REGION")
-	awsEndpoint := os.Getenv("AWS_ENDPOINT")
-	// bucketName := os.Getenv("S3_BUCKET")
+func (s S3) ListObjects(ctx context.Context, bucketName string) ([]*BucketObject, error) {
+	// Result is sorted by key name, not date
+	res, err := s.client.ListObjectsV2(ctx, &s3.ListObjectsV2Input{
+		Bucket: aws.String(bucketName),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list: %w", err)
+	}
 
-	customResolver := aws.EndpointResolverFunc(func(service, region string) (aws.Endpoint, error) {
-		if awsEndpoint != "" {
+	objects := make([]*BucketObject, len(res.Contents))
+
+	for i, object := range res.Contents {
+		objects[i] = &BucketObject{
+			Key:        *object.Key,
+			ModifiedAt: *object.LastModified,
+		}
+	}
+
+	// Sort by date and make it desc, so latest (recent) is at the beginning
+	sort.SliceStable(objects, func(i, j int) bool {
+		return objects[j].ModifiedAt.Before(objects[i].ModifiedAt)
+	})
+
+	return objects, nil
+}
+
+func (s S3) DeleteObjects(ctx context.Context, bucketName string, objects []*BucketObject) error {
+	var objectIds []types.ObjectIdentifier
+
+	for _, o := range objects {
+		objectIds = append(objectIds, types.ObjectIdentifier{Key: aws.String(o.Key)})
+	}
+	_, err := s.client.DeleteObjects(ctx, &s3.DeleteObjectsInput{
+		Bucket: aws.String(bucketName),
+		Delete: &types.Delete{Objects: objectIds},
+	})
+	if err != nil {
+		return fmt.Errorf("delete: %w", err)
+	}
+	return err
+}
+
+func NewCfg(region string, endpoint string) aws.Config {
+	customResolver := aws.EndpointResolverFunc(func(s, r string) (aws.Endpoint, error) {
+		if endpoint != "" {
 			return aws.Endpoint{
 				PartitionID:   "aws",
-				URL:           awsEndpoint,
-				SigningRegion: awsRegion,
+				URL:           endpoint,
+				SigningRegion: region,
 			}, nil
 		}
 
@@ -77,11 +120,11 @@ func NewAwsCfg() aws.Config {
 	})
 
 	awsCfg, err := config.LoadDefaultConfig(context.TODO(),
-		config.WithRegion(awsRegion),
+		config.WithRegion(region),
 		config.WithEndpointResolver(customResolver),
 	)
 	if err != nil {
-		log.Fatalf("Cannot load the AWS config: %s", err)
+		fmt.Errorf("aws config: %w", err)
 	}
 
 	return awsCfg
